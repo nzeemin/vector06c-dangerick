@@ -37,13 +37,13 @@ PUT_SPRITE9:
 	ADI 7
 	MOV E,A		; set video L byte
 
-	PUSH D
+	PUSH D		; save screen addr
 ;	INR H		;NZ level addr starts at $0100
 	MOV A,M		; get tile number
 	CALL getmap
 	XCHG
 	SHLD V_TEMP_16	; set tile
-	POP D
+	POP D		; restore screen addr
 	MVI B, 8
 P_S9:	
 	CALL PUT_TRANS

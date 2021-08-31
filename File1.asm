@@ -12,22 +12,22 @@ START0:
 ;NOTE: Should be started with $XX00 address
 	.include "Images.asm"
 
+enemies_msk:
+	.ds 960
+;C_START_VARS:
+	.ds 64
+
 	.include "Sprites.asm"
 	.include "Map.asm"
 	.include "MapData.asm"
 	.include "Music.asm"
-
-enemies_msk:
-	.ds 960
-;C_START_VARS:
-	.ds 48
 
 	.include "Common.asm"
 
 ;----------------------------------------------------------------------------
 
 ; Returns: A=key code, $00 no key; Z=0 for key, Z=1 for no key
-; Key codes: Fire=$01, Left=$02, Right=$04, Jump=$08, VK/PS=$20
+; Key codes: Fire=$01, Left=$40, Right=$10, Up=$20, Down=$80, VK/PS=$02
 ReadKeyboard:
   xra a
   sta ReadKeyboard_3+1
@@ -59,15 +59,15 @@ ReadKeyboard_3:
   ora a			; set/reset Z flag
   ret
 
-; Mapping: Arrows Left/Right - rotate the ship, Up - Jump,
+; Mapping: Left/Right/Down - move, Up - Jump,
 ;          US/SS/RusLat/ZB - fire
 ReadKeyboard_map:                      ; 7   6   5   4   3   2   1   0
   .DW KeyLineEx
   .DB $01,$01,$01,$00,$00,$00,$00,$00  ; R/L SS  US  --  --  --  --  --
   .DW KeyLine0
-  .DB $00,$04,$08,$02,$01,$20,$20,$00  ; Dn  Rt  Up  Lt  ZB  VK  PS  Tab
+  .DB $80,$10,$20,$40,$01,$02,$02,$00  ; Dn  Rt  Up  Lt  ZB  VK  PS  Tab
   .DW JoystickP
-  .DB $01,$01,$00,$00,$00,$08,$02,$04  ; Fr  Fr  --  --  Dn  Up  Lt  Rt
+  .DB $01,$01,$00,$00,$80,$20,$40,$10  ; Fr  Fr  --  --  Dn  Up  Lt  Rt
 
 ;----------------------------------------------------------------------------
 
@@ -115,7 +115,8 @@ START_LEV:
 	LXI b,0000h		; BC = addr unpack to ;NZ (was 0)
 	di			;NZ
 	call unmlz
-	shld	2		;NZ
+	
+	mvi	a,0C3h		;NZ
 	sta	38h		;NZ
 	lxi	h,KEYINT	;NZ
 	shld	38h+1
@@ -550,7 +551,7 @@ SHOT_DRAW:
 	LXI H, G_SHT1	
 	ADD L
 	MOV L,A
-	SHLD V_SPRITE
+	SHLD V_SPRITE		; set sprite addr
 	LHLD V_SHT_X
 	LDA V_SHT_DIR
 	ADD L
@@ -982,17 +983,17 @@ readkey:
 	JNZ do_ice
 	ret
 keypressed:
-	cpi 16
+	cpi 16		; $10 - right
 	jz cur_r
-	cpi 32
+	cpi 32		; $20 - up
 	jz cur_u
-	cpi 64
+	cpi 64		; $40 - left
 	jz cur_l
-	cpi 128
+	cpi 128		; $80 - down
 	jz cur_d
-	cpi 48
+	cpi 48		; $30 - right-up
 	jz cur_r_u
-	cpi 96
+	cpi 96		; $60 - left-up
 	jz cur_l_u
 	ret
 
