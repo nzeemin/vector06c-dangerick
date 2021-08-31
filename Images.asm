@@ -82,7 +82,8 @@ level_intros_data:
 level_text:
 	.dw w_text1,w_text2,w_text3,w_text4,w_text5,w_intro_text
 level_palettes: 
-	.db 12+128, 72+128, 12+128, 13+128,13+128,13+128
+;	.db 12+128, 72+128, 12+128, 13+128,13+128,13+128
+	.db 32, 16, 32, 0, 0, 0	;NZ
 
 w_intro_text:
 	.dw 0C3F7h ;NZ 4206h
@@ -95,6 +96,8 @@ w_intro_text:
 	.db 0,"SPECIAL",40h,"THANKS",40h,"TO",0
 	.dw 0C547h ;NZ 6e0ah
 	.db 0,"MARATBEST",40h,"AND",40h,"IVAGOR",0
+	.dw 0C325h ;NZ
+	.db 0,"VECTOR06C",40h,"PORT",40h,"BY",40h,"NZEEMIN",0
 	.dw 0D413h ;NZ 7b28h
 	.db 0,"2021",40h,"V0.02",40h,0
 	.dw 00

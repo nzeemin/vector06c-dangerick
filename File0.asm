@@ -5,7 +5,7 @@ START0	.equ	20FDh
 
 	.EXPORT KEYINT
 	.EXPORT KeyLineEx, KeyLine0, JoystickP
-	.EXPORT SetIntroPalette
+	.EXPORT SetIntroPalette, SetPaletteA
 
 ;----------------------------------------------------------------------------
 
@@ -85,7 +85,13 @@ JoystickP:	.db 11111111b
 
 ; Set palette for the intro screen
 SetIntroPalette:
+	xra	a
+; Set palette; A = 0,16,32
+SetPaletteA:
 	lxi	h, PaletteIntro+15
+	mov	e,a
+	mvi	d,0
+	dad	d
 ; Programming the Palette
 SetPalette:
 	ei
@@ -111,7 +117,7 @@ PaletLoop:
 
 ColorNone .equ 00000000b
 
-; Palette colors, title screen
+; Title screen palette - #13 - Black / Blue / Green / Yellow
 PaletteIntro:
 	.db	00000000b	;0
 	.db	11000000b	;1
@@ -129,7 +135,42 @@ PaletteIntro:
 	.db	11000000b	;13
 	.db	00111000b	;14
 	.db	00111111b	;15
-
+; 2nd palette - #72 - Black / Red / Cyan / White
+Palette2:
+	.db	00000000b	;0
+	.db	00000111b	;1
+	.db	11111000b	;2
+	.db	11111111b	;3
+	.db	00000000b	;4
+	.db	00000111b	;5
+	.db	11111000b	;6
+	.db	11111111b	;7
+	.db	00000000b	;8
+	.db	00000111b	;9
+	.db	11111000b	;10
+	.db	11111111b	;11
+	.db	00000000b	;12
+	.db	00000111b	;13
+	.db	11111000b	;14
+	.db	11111111b	;15
+; 3rd palette - #12 - Black / Magenta / Green / Yellow
+Palette3:
+	.db	00000000b	;0
+	.db	11000111b	;1
+	.db	00111000b	;2
+	.db	00111111b	;3
+	.db	00000000b	;4
+	.db	11000111b	;5
+	.db	00111000b	;6
+	.db	00111111b	;7
+	.db	00000000b	;8
+	.db	11000111b	;9
+	.db	00111000b	;10
+	.db	00111111b	;11
+	.db	00000000b	;12
+	.db	11000111b	;13
+	.db	00111000b	;14
+	.db	00111111b	;15
 
 ;----------------------------------------------------------------------------
 

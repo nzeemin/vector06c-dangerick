@@ -8,7 +8,6 @@ START0:
 
 ;----------------------------------------------------------------------------
 
-;	.ORG $2000 ;DEBUG
 ;NOTE: Should be started with $XX00 address
 	.include "Images.asm"
 
@@ -79,8 +78,6 @@ START1:
 	LXI SP,0C000h	;NZ
 
 START:	
-	;MVI A,C_INTRO_PAL
-	;OUT 193
 	call SetIntroPalette
 
 	MVI A,5
@@ -304,6 +301,7 @@ MAP_3:
 	STA V_VISIBILITY
 
 MAIN_LOOP:
+	hlt	;NZ
 	LDA V_TIMER
 	INR A
 	STA V_TIMER
@@ -342,7 +340,6 @@ MAIN_LOOP:
 	STA V_YOU_VERT
 	
 MAIN_DRAW:
-
 	LDA V_TYPE
 	MOV B,A	
 	LDA V_YOU_DIR
@@ -983,6 +980,10 @@ readkey:
 	JNZ do_ice
 	ret
 keypressed:
+	mov c,a		;NZ
+	ani 1		;NZ
+	jnz cur_sp	;NZ
+	mov a,c		;NZ
 	cpi 16		; $10 - right
 	jz cur_r
 	cpi 32		; $20 - up
@@ -1158,6 +1159,7 @@ light_button:
 	MOV L,A
 	MOV A,M
 ;TODO	OUT 193
+	call SetPaletteA	;NZ
 	MVI A,0 ;NOP
 	STA V_VISIBILITY
 	STA visibility
@@ -1343,9 +1345,6 @@ play_music:
 	CALL INIT_MUSIC
 waitkey:
 	call play_note
-
-;	di	;DEBUG
-;	hlt	;DEBUG
 
 	push b
 	call ReadKeyboard

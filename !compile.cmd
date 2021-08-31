@@ -1,4 +1,9 @@
 @echo off
+if exist dangeric0.bin del dangeric0.bin
+if exist dangerick.bin del dangerick.bin
+if exist File0.lst del File0.lst
+if exist File0.exp del File0.exp
+if exist File1.lst del File1.lst
 if exist dangerick.rom del dangerick.rom
 
 rem Define ESCchar to use in ANSI escape sequences
