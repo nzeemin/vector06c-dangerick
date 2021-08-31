@@ -88,10 +88,8 @@ level_palettes:
 w_intro_text:
 	.dw 0C3F7h ;NZ 4206h
 	.db 0,"ZELYA",40h,"AND",40h,"DIMOUSE",40h,"PRESENT",0
-	.dw 0CBA0h ;NZ 5817h
-	.db 15,"DANGEROUS",0 
-	.dw 0CB97h ;NZ 5a17h
-	.db 15,40h,40h,"RICK",40h,40h,40h,0
+	.dw 0C99Ch ;NZ 5817h
+	.db 15,"DANGEROUS",40h,"RICK",0 
 	.dw 0C653h ;NZ 6b0ch
 	.db 0,"SPECIAL",40h,"THANKS",40h,"TO",0
 	.dw 0C547h ;NZ 6e0ah
@@ -99,7 +97,7 @@ w_intro_text:
 	.dw 0C325h ;NZ
 	.db 0,"VECTOR06C",40h,"PORT",40h,"BY",40h,"NZEEMIN",0
 	.dw 0D413h ;NZ 7b28h
-	.db 0,"2021",40h,"V0.02",40h,0
+	.db 0,"2021",40h,"V0.03",40h,0
 	.dw 00
 w_text1:
 	.dw 0CBF7h ;NZ 4216h

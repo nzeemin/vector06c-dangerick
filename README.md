@@ -3,6 +3,8 @@ Porting **Dangerous Rick** game from Lviv PK01 (Львов ПК-01) computer to 
 
 Porting status: Work In Progress.
 
+![](screenshot/title.png) ![](screenshot/level1.png)
+
 
 ## Tools for the tools folder
 
