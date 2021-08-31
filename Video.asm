@@ -34,13 +34,12 @@ PUT_SPRITE9:
 	RLC 		; times 2
 	RLC
 	RLC
+	ADI 7
 	MOV E,A		; set video L byte
 
 	PUSH D
-	MVI A,128	;NZ set bit7, so addr is $8XXX
-	ORA H		;NZ
-	MOV H,A		;NZ
-	MOV A,M
+;	INR H		;NZ level addr starts at $0100
+	MOV A,M		; get tile number
 	CALL getmap
 	XCHG
 	SHLD V_TEMP_16	; set tile
@@ -62,10 +61,8 @@ P_S9:
 		;bytes:
 		;ticks: 
 PUT_TILE:		
-	MVI A,128	;NZ set bit7, so addr is $8XXX
-	ORA H		;NZ
-	MOV H,A		;NZ
-	MOV A,M
+;	INR H		;NZ level addr starts at $0100
+	MOV A,M		; get tile number
 PUT_TILE2:
 	CALL getmap	
 	MOV A,L		; get X
@@ -77,6 +74,7 @@ PUT_TILE2:
 	RLC 		; times 2
 	RLC
 	RLC
+	ADI 7
 	MOV L,A		; set video L byte
 	MOV H,B		; set video H byte
 

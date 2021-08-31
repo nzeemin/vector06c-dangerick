@@ -1,15 +1,18 @@
 
 ;----------------------------------------------------------------------------
 
-START0	.equ	2FDh
+START0	.equ	20FDh
 
-	.EXPORT ReadKeyboard
+	.EXPORT KEYINT
+	.EXPORT KeyLineEx, KeyLine0, JoystickP
 	.EXPORT SetIntroPalette
 
 ;----------------------------------------------------------------------------
 
 	.org	100h
+	jp	2000h
 
+	.ORG	2000h
 	di
 	xra	a
 	out	10h			; turn off the quasi-disk
@@ -77,51 +80,6 @@ KEYINT_J:
 KeyLineEx:	.db 11111111b
 KeyLine0:	.db 11111111b
 JoystickP:	.db 11111111b
-
-;----------------------------------------------------------------------------
-
-; Returns: A=key code, $00 no key; Z=0 for key, Z=1 for no key
-; Key codes: Fire=$01, Left=$02, Right=$04, Jump=$08, VK/PS=$20
-ReadKeyboard:
-  xra a
-  sta ReadKeyboard_3+1
-  lxi h,ReadKeyboard_map  ; Point HL at the keyboard list
-  mvi b,3		; number of rows to check
-ReadKeyboard_0:        
-  mov e,m		; get address low
-  inx h
-  mov d,m		; get address high
-  inx h
-  ldax d		; get bits for keys
-  mvi c,8		; number of keys in a row
-ReadKeyboard_1:
-  ral			; shift A left; bit 0 sets carry bit
-  jc ReadKeyboard_2	; if the bit is 1, the key's not pressed
-  mov e,a		; save A
-  lda ReadKeyboard_3+1
-  ora m			; set bit for the key pressed
-  sta ReadKeyboard_3+1
-  mov a,e		; restore A
-ReadKeyboard_2:
-  inx h			; next table address
-  dcr c
-  jnz ReadKeyboard_1	; continue the loop by bits
-  dcr b
-  jnz ReadKeyboard_0	; continue the loop by lines
-ReadKeyboard_3:
-  mvi a,0		; set the result; mutable parameter!
-  ora a			; set/reset Z flag
-  ret
-
-; Mapping: Arrows Left/Right - rotate the ship, Up - Jump,
-;          US/SS/RusLat/ZB - fire
-ReadKeyboard_map:                      ; 7   6   5   4   3   2   1   0
-  .DW KeyLineEx
-  .DB $01,$01,$01,$00,$00,$00,$00,$00  ; R/L SS  US  --  --  --  --  --
-  .DW KeyLine0
-  .DB $00,$04,$08,$02,$01,$20,$20,$00  ; Dn  Rt  Up  Lt  ZB  VK  PS  Tab
-  .DW JoystickP
-  .DB $01,$01,$00,$00,$00,$08,$02,$04  ; Fr  Fr  --  --  Dn  Up  Lt  Rt
 
 ;----------------------------------------------------------------------------
 
