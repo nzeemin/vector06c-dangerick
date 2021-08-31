@@ -1,0 +1,164 @@
+	include "Common.asm"
+	include "Video.asm"
+
+
+
+
+
+		;in: 	HL - xy, C - direct, B - hight 
+		;out: 	B (0,1)
+		;chg: 	A, B
+		;bytes:
+		;ticks:
+CAN_GO:		
+	MOV A,L
+	ADD C
+	MOV L,A
+	
+	LDA V_CUR_SCR
+	XRA L
+	ANI 11100000b
+	
+	
+	MOV C,B
+	MVI B,0
+	CPI 0
+	RNZ
+
+	
+	;LDA V_CUR_SCR
+	;ORA L
+	;MOV L,A
+
+	MOV A,C
+	CPI 2
+	JZ CAN_GO_2
+	
+	INR H
+	MOV A,M
+	CPI V_CAN_GO
+
+	RNC
+	DCR H
+CAN_GO_2:
+	DCR H
+	MOV A,M
+	CPI V_CAN_GO
+	RNC
+	INR H
+	MOV A,M
+	CPI V_CAN_GO
+	RNC
+	
+	MVI B,1
+	RET
+
+
+
+
+
+
+
+
+FALL:	
+	STA V_YOU_VERT
+	MOV C,A
+	LDA V_YOU_Y
+	MOV H,A
+	ADD C
+	STA V_YOU_Y
+	
+	LDA V_YOU_X
+	MOV L,A
+	MOV A,H
+	SUB C
+	MOV H,A
+
+	SHLD V_TEMP_16	
+	DCR L
+	CALL PUT_TILE
+	LHLD V_TEMP_16
+	CALL PUT_TILE
+	LHLD V_TEMP_16
+	INR L
+	CALL PUT_TILE
+
+
+
+	LHLD V_YOU_X
+	INR H
+	MOV A,M
+	CPI V_CAN_UP
+	JNC FALL_PUT_128
+	INR H
+	MOV A,M
+	CPI V_CAN_GO
+	JNC FALL_PUT_128
+
+	;LDA V_TYPE
+	;ANI 01111111b
+	;CPI 2
+	;RZ
+	;MVI A,2
+	;STA V_TYPE
+	RET
+
+FALL_PUT_128:
+	MVI A,128
+	STA V_TYPE
+	
+	RET
+
+DO_DEAD:
+	MVI A,255
+	STA V_TYPE
+	RET
+
+CHECK_FALL:
+	LHLD V_YOU_X
+
+	INR H
+	MOV A,M
+	CPI V_CAN_UP
+	JNC C_F2
+
+	INR H
+	MOV A,M
+	CPI V_CAN_GO
+	RNC
+
+	LDA V_TYPE
+	ANI 01111111b
+	CPI 2
+	RZ
+	MVI A,2
+	STA V_TYPE
+	RET
+	
+C_F2:
+	INR H
+	MOV A,M
+	CPI V_CAN_DEAD
+	JNC  DO_DEAD
+
+	DCR L
+	MOV A,M
+	CPI V_CAN_GO
+	RNC
+	CPI V_CAN_UP
+	RC
+	INR L
+	MOV A,M
+	CPI V_CAN_GO
+	RNC
+	CPI V_CAN_UP
+	RC
+	INR L
+	MOV A,M
+	CPI V_CAN_GO
+	RNC
+	CPI V_CAN_UP
+	RC
+	MVI A,1
+	JMP FALL
+	;RET

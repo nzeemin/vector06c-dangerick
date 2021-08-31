@@ -1,0 +1,205 @@
+;graphic
+G_YOU9 = 576;dead		1152 - gulman?
+G_SHT1 = 648;1296;
+
+C_START_VARS = enemies_msk+960
+
+V_TYPE = C_START_VARS
+V_YOU_X = C_START_VARS+1
+V_YOU_Y = C_START_VARS+2
+V_TEMP_16 = C_START_VARS+3
+;Empty space
+V_SPRITE = C_START_VARS+6
+V_TIMER = C_START_VARS+8
+V_YOU_DIR = C_START_VARS+9
+V_YOU_VERT = C_START_VARS+10
+
+V_ENE_X = C_START_VARS+11
+V_ENE_Y = C_START_VARS+12
+V_ENE_DIR = C_START_VARS+13
+V_ENE_MOV_TYP = C_START_VARS+14
+V_ENE_TYP = C_START_VARS+19
+
+V_SHT_X = C_START_VARS+15
+V_SHT_Y = C_START_VARS+16
+V_SHT_DIR = C_START_VARS+17
+V_SHT_TYP = C_START_VARS+18
+V_CUR_ENEMY = C_START_VARS+20
+
+V_CUR_SCR = C_START_VARS+22
+
+V_START_X = C_START_VARS+24
+V_START_Y = C_START_VARS+25
+V_LIVES = C_START_VARS+26
+V_ANI_CYC = C_START_VARS+27
+V_CUR_MAP = C_START_VARS+28
+V_SOUND = C_START_VARS+29
+V_ICE_DIR = C_START_VARS+30
+V_VISIBILITY = C_START_VARS+31
+V_BOSS_LIVES = C_START_VARS+32
+
+C_ENEMY_DEAD = 255
+C_ENEMY_START = 7936
+
+l_a = 1
+l_b = l_a+1
+l_c = l_a+2
+l_d = l_a+3
+l_e = l_a+4
+l_f = l_a+5
+l_g = l_a+6
+l_h = l_a+7
+l_i = l_a+8
+l_j = l_a+9
+l_k = l_a+10
+l_l = l_a+11
+l_m = l_a+12
+l_n = l_a+13
+l_o = l_a+14
+l_p = l_a+15
+l_q = l_a+16
+l_r = l_a+17
+l_s = l_a+18
+l_t = l_a+19
+l_u = l_a+20
+l_v = l_a+21
+l_w = l_a+22
+l_x = l_a+23
+l_y = l_a+24
+l_z = l_a+25
+
+;контроктава
+C1 = 2262
+CSh1 = 2135
+Db1 = 2135
+D1 = 2015
+DSh1 = 1902
+Eb1 = 1902
+E1 = 1795
+F1 = 1694
+FSh1 = 1599
+Gb1 = 1599
+G1 = 1509
+GSh1 = 1424
+Ab1 =1424
+A1 =1344
+ASh1 =1268
+B1 =1268
+Hb1 =1268
+H1 =1197
+
+;большая октава
+C2 =1130
+CSh2 =1066
+Db2 =1066
+D2 =1006
+DSh2 =949
+Eb2 =949
+E2 =896
+F2 =845
+FSh2 =798
+Gb2 =798
+G2 =753
+GSh2 =710
+Ab2 =710
+A2 =670
+ASh2 =633
+B2 =633
+Hb2 =633
+H2 =597
+
+;малая октава
+C3 =559
+CSh3 =532
+Db3 =532
+D3 =501
+DSh3 =473
+Eb3 =473
+E3 =447
+F3 =421
+FSh3 =397
+Gb3 =397
+G3 =375
+GSh3 =354
+Ab3 =354
+A3 =331
+ASh3 =315
+B3 =315
+Hb3 =315
+H3 =297
+
+;первая октава
+C4 =280
+CSh4 =264
+Db4 =264
+D4 =249
+DSh4 =235
+Eb4 =235
+E4 =222
+F4 =209
+FSh4 =197
+Gb4 =197
+G4 =186
+GSh4 =175
+Ab4 =175
+A4 =165
+ASh4 =156
+B4 =156
+Hb4 =156
+H4 =147
+
+;вторая октава
+C5 =139
+CSh5 =131
+Db5 =131
+D5 =123
+DSh5 =116
+Eb5 =116
+E5 =109
+F5 =103
+FSh5 =97
+Gb5 =97
+G5 =92
+GSh5 =86
+Ab5 =86
+A5 =81
+ASh5 =77
+B5 =77
+Hb5 =77
+H5 =72
+
+;третья октава
+C6 =68
+CSh6 =64
+Db6 =64
+D6 =60
+DSh6 =57
+Eb6 =57
+E6 =53
+F6 =50
+FSh6 =47
+Gb6 =47
+G6 =44
+GSh6 =41
+Ab6 =41
+A6 =39
+ASh6 =37
+B6 =37
+Hb6 =37
+H6 =35
+
+C7 = 33
+
+P =0FFFFh
+L64 = 2048;512
+L32 = L64+L64
+L.32 = L64+L32
+L16 = L32+L32;/Tempo
+L.16 = L16+L32;L16*3
+L8 = L16+L16;L16*2
+L.8 = L16+L16+L16;L16*3
+L4 = L16+L16+L16+L16;L16*4
+L.4 = L16+L16+L16+L16+L16+L16;L16*6
+L2 = L16+L16+L16+L16+L16+L16+L16+L16;L16*8
+L.2 = L16+L16+L16+L16+L16+L16+L16+L16+L16+L16+L16+L16+L16+L16;L16*14
+L1 = L2+L2
