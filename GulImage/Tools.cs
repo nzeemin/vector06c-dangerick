@@ -3,7 +3,6 @@ using GulImage.Properties;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
-using System.Windows.Forms;
 
 namespace GulImage
 {
@@ -136,9 +135,8 @@ namespace GulImage
             return result;
         }
 
-        public static Bitmap PrepareTileBitmap(int palette, byte[] bytes)
+        public static void DrawTile(Graphics graph, int palette, byte[] bytes, int x = 0, int y = 0, int scale = 2)
         {
-            var bitmap = new Bitmap(16, 16);
             for (int ty = 0; ty < 8; ++ty)
             {
                 var num0 = bytes[ty * 2];
@@ -147,11 +145,17 @@ namespace GulImage
                 {
                     int colorIndex = compute_color_index(palette, ((num0 >> tx) & 1) * 2 + ((num1 >> tx) & 1));
                     var color = Color.FromArgb(r[colorIndex], g[colorIndex], b[colorIndex]);
-                    bitmap.SetPixel(tx * 2, ty * 2, color);
-                    bitmap.SetPixel(tx * 2 + 1, ty * 2, color);
-                    bitmap.SetPixel(tx * 2, ty * 2 + 1, color);
-                    bitmap.SetPixel(tx * 2 + 1, ty * 2 + 1, color);
+                    graph.FillRectangle(new SolidBrush(color), x + tx * scale, y + ty * scale, scale, scale);
                 }
+            }
+        }
+
+        public static Bitmap PrepareTileBitmap(int palette, byte[] bytes, int scale = 2)
+        {
+            var bitmap = new Bitmap(8 * scale, 8 * scale);
+            using (var graph = Graphics.FromImage(bitmap))
+            {
+                DrawTile(graph, palette, bytes, 0, 0, scale);
             }
 
             return bitmap;

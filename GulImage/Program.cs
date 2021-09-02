@@ -9,8 +9,10 @@ namespace GulImage
 {
     internal static class Program
     {
-        public static List<Map> _maps = new List<Map>();
+        public static readonly List<Map> _maps = new List<Map>();
         public static List<byte[]> _tiles;
+
+        private static readonly string[] MapFileNames = { "maps1.txt", "maps2.txt", "maps3.txt", "maps4.txt" };
 
         [STAThread]
         private static void Main()
@@ -18,10 +20,16 @@ namespace GulImage
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            _maps.Add(new Map("maps1.txt"));
-            _maps.Add(new Map("maps2.txt"));
-            _maps.Add(new Map("maps3.txt"));
-            _maps.Add(new Map("maps4.txt"));
+            foreach (var filename in MapFileNames)
+            {
+                var map = new Map();
+                if (File.Exists(filename))
+                {
+                    string[] mapFileContent = File.ReadAllLines(filename);
+                    map.ParseMap(mapFileContent);
+                }
+                _maps.Add(map);
+            }
 
             var fileContent = File.ReadAllLines("tiles.txt");
             _tiles = Tools.ParseTiles(fileContent);
@@ -31,9 +39,12 @@ namespace GulImage
 
         public static void SaveMaps()
         {
-            foreach (var map in _maps)
+            for (var i = 0; i < _maps.Count; i++)
             {
-                File.WriteAllText(map.Filename, Tools.PrepareAsmDbStrings(map.GetBytes(), 32, 8));
+                var map = _maps[i];
+                File.WriteAllText(
+                    MapFileNames[i],
+                    Tools.PrepareAsmDbStrings(map.GetBytes(), 32, 8));
             }
         }
 

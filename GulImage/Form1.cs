@@ -17,13 +17,13 @@ namespace GulImage
         private static byte[] g = new byte[8] { 0, 0, 192, 192, 0, 0, 192, byte.MaxValue };
         private static byte[] r = new byte[8] { 0, 0, 0, 0, 192, 192, 192, byte.MaxValue };
 
-        private const int ImgSize = 16;
+        private const int ScreenScale = 2;
 
         private bool _isSelectionMode = false;
         private Rectangle _selection = Rectangle.Empty;
         private Bitmap _image;
         private Point _highLighted;
-        private readonly Bitmap _mapImage;
+        private readonly Bitmap _screenImage;
         private readonly Graphics _graph;
         private int[,] _buffer;
 
@@ -37,20 +37,24 @@ namespace GulImage
             AllowDrop = true;
             listView1.AllowDrop = true;
             panel1.AllowDrop = true;
+            pictureBox2.Width = Map.ScreenWidth * 8 * ScreenScale;
+            pictureBox2.Height = Map.ScreenHeight * 8 * ScreenScale;
 
             _image = new Bitmap(248, 248);
-            _mapImage = new Bitmap(32 * ImgSize, 31 * ImgSize);
-            _graph = Graphics.FromImage(_mapImage);
+            _screenImage = new Bitmap(Map.ScreenWidth * 8 * ScreenScale, Map.ScreenHeight * 8 * ScreenScale);
+            _graph = Graphics.FromImage(_screenImage);
             RefreshImage();
-            pictureBox2.Image = _mapImage;
+            pictureBox2.Image = _screenImage;
 
             RefreshColors();
-            RefreshMap();
+            RefreshScreen();
         }
 
         private Map CurrentMap => Program._maps[(int)numericUpDown2.Value];
 
         private int CurrentPalNum => (int)palNum.Value;
+
+        private int CurrentScreen => (int)numericUpDown1.Value;
 
         private void RefreshColors()
         {
@@ -60,23 +64,22 @@ namespace GulImage
             pCol3.BackColor = GetColor(2, CurrentPalNum);
             pCol4.BackColor = GetColor(3, CurrentPalNum);
 
-            LoadImages();
+            RefreshTiles();
         }
 
         private static Color GetColor(int index, int pal)
         {
-            return Color.FromArgb(
-                r[Tools.compute_color_index(pal, index)], g[Tools.compute_color_index(pal, index)], b[Tools.compute_color_index(pal, index)]);
+            return Tools.GetColorFromNumber(Tools.compute_color_index(pal, index));
         }
 
-        private void LoadImages()
+        private void RefreshTiles()
         {
             imageList1.Images.Clear();
             listView1.Items.Clear();
             for (int index1 = 0; index1 < Program._tiles.Count; ++index1)
             {
                 var bytes = Program._tiles[index1];
-                var bitmap = Tools.PrepareTileBitmap(CurrentPalNum, bytes);
+                var bitmap = Tools.PrepareTileBitmap(CurrentPalNum, bytes, 1);
 
                 imageList1.Images.Add(bitmap);
                 ListView.ListViewItemCollection items = listView1.Items;
@@ -87,6 +90,31 @@ namespace GulImage
                 int count2 = listView1.Items.Count;
                 items.Add(key, text, count2);
             }
+        }
+
+        private void RefreshImage()
+        {
+            Bitmap bitmap = new Bitmap(_image.Width * 3, _image.Height * 3);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+                graphics.DrawImage(_image, 0, 0, _image.Width * 3, _image.Height * 3);
+                for (int index = 0; index < _image.Width / 8; ++index)
+                {
+                    graphics.DrawLine(Pens.White, 0, index * 24 + 23, _image.Width * 3, index * 24 + 23);
+                    graphics.DrawLine(Pens.White, index * 24 + 23, 0, index * 24 + 23, _image.Height * 3);
+                }
+            }
+            pictureBox1.Image = bitmap;
+        }
+
+        private void RefreshScreen()
+        {
+            CurrentMap.DrawScreen(
+                _graph, _mapFont, _mapBrush,
+                CurrentScreen, showCodesToolStripMenuItem.Checked,
+                CurrentPalNum, ScreenScale);
+            pictureBox2.Image = _screenImage;
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -111,22 +139,6 @@ namespace GulImage
             pictureBox1.Height = bitmap2.Height * 3;
             _image = bitmap2;
             RefreshImage();
-        }
-
-        private void RefreshImage()
-        {
-            Bitmap bitmap = new Bitmap(_image.Width * 3, _image.Height * 3);
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
-                graphics.DrawImage(_image, 0, 0, _image.Width * 3, _image.Height * 3);
-                for (int index = 0; index < _image.Width / 8; ++index)
-                {
-                    graphics.DrawLine(Pens.White, 0, index * 24 + 23, _image.Width * 3, index * 24 + 23);
-                    graphics.DrawLine(Pens.White, index * 24 + 23, 0, index * 24 + 23, _image.Height * 3);
-                }
-            }
-            pictureBox1.Image = bitmap;
         }
 
         private void splitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -166,15 +178,20 @@ namespace GulImage
             listView1.Alignment = ListViewAlignment.Top;
         }
 
+        private void listView1_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Link;
+        }
+
         //NOTE: Changed for Vector-06C video
         private byte[] ParseOriginalImage(Bitmap originalImage)
         {
-            byte[] colors = new byte[4];
-            for (int color = 0; color < 4; ++color)
+            var colors = new byte[4];
+            for (var color = 0; color < 4; ++color)
                 colors[color] = Tools.compute_color_index(CurrentPalNum, color);
-            List<byte> byteList = new List<byte>();
+            var byteList = new List<byte>();
             byte num1 = 0, num2 = 0;
-            for (int y = 0; y < originalImage.Height; ++y)
+            for (var y = 0; y < originalImage.Height; ++y)
             {
                 for (int x = 0; x < originalImage.Width; ++x)
                 {
@@ -215,11 +232,6 @@ namespace GulImage
             return num2;
         }
 
-        private void listView1_DragEnter(object sender, DragEventArgs e)
-        {
-            e.Effect = DragDropEffects.Link;
-        }
-
         private void tmiSave_Click(object sender, EventArgs e)
         {
             StringBuilder stringBuilder = new StringBuilder();
@@ -254,12 +266,9 @@ namespace GulImage
             Program.SaveMaps();
         }
 
-        private void RefreshMap()
+        private void packToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CurrentMap.RefreshMap(
-                _graph, _mapFont, _mapBrush,
-                (int)numericUpDown1.Value, imageList1.Images, showCodesToolStripMenuItem.Checked);
-            pictureBox2.Image = _mapImage;
+            Program.PackMaps();
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -316,33 +325,41 @@ namespace GulImage
 
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            RefreshMap();
+            // Screen number changed
+            RefreshScreen();
         }
 
         private void numericUpDown2_ValueChanged(object sender, EventArgs e)
         {
-            RefreshMap();
+            // Level number changed
+            RefreshScreen();
+        }
+
+        private void palNum_ValueChanged(object sender, EventArgs e)
+        {
+            RefreshColors();
+            RefreshScreen();
         }
 
         private void pictureBox2_MouseMove(object sender, MouseEventArgs e)
         {
             if (_isSelectionMode && (e.Button & MouseButtons.Left) == MouseButtons.Left)
             {
-                _selection.Width = e.X / ImgSize - _selection.X;
-                _selection.Height = e.Y / ImgSize - _selection.Y;
-                RefreshMap();
-                _graph.DrawRectangle(Pens.Gray, _selection.X * ImgSize, _selection.Y * ImgSize, _selection.Width * ImgSize, _selection.Height * ImgSize);
+                _selection.Width = e.X / (8 * ScreenScale) - _selection.X;
+                _selection.Height = e.Y / (8 * ScreenScale) - _selection.Y;
+                RefreshScreen();
+                _graph.DrawRectangle(Pens.Gray, _selection.X * 8 * ScreenScale, _selection.Y * 8 * ScreenScale, _selection.Width * 8 * ScreenScale, _selection.Height * 8 * ScreenScale);
             }
             else
             {
                 if (_isSelectionMode && _selection != Rectangle.Empty)
                     return;
-                Point point = new Point(e.X / ImgSize, e.Y / ImgSize);
+                Point point = new Point(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale));
                 if (_highLighted != point)
                 {
                     _highLighted = point;
-                    RefreshMap();
-                    _graph.DrawRectangle(Pens.Gray, _highLighted.X * ImgSize, _highLighted.Y * ImgSize, ImgSize, ImgSize);
+                    RefreshScreen();
+                    _graph.DrawRectangle(Pens.Gray, _highLighted.X * 8 * ScreenScale, _highLighted.Y * 8 * ScreenScale, 8 * ScreenScale, 8 * ScreenScale);
                 }
             }
         }
@@ -355,14 +372,24 @@ namespace GulImage
             {
                 if (listView1.SelectedItems.Count <= 0)
                     return;
-                Point point = new Point(e.X / ImgSize, e.Y / ImgSize);
+                Point point = new Point(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale));
                 ListViewItem selectedItem = listView1.SelectedItems[0];
-                Graphics.FromImage(pictureBox2.Image).DrawImage(imageList1.Images[selectedItem.ImageIndex], point.X * ImgSize, point.Y * ImgSize);
-                CurrentMap.SetPoint((int)numericUpDown1.Value, point.X, point.Y, selectedItem.ImageIndex);
+                Graphics.FromImage(pictureBox2.Image).DrawImage(imageList1.Images[selectedItem.ImageIndex], point.X * 8 * ScreenScale, point.Y * 8 * ScreenScale);
+                CurrentMap.SetPoint(CurrentScreen, point.X, point.Y, selectedItem.ImageIndex);
                 pictureBox2.Refresh();
             }
             else
-                _selection = !(_selection != Rectangle.Empty) ? new Rectangle(e.X / ImgSize, e.Y / ImgSize, 0, 0) : Rectangle.Empty;
+                _selection = !(_selection != Rectangle.Empty) ? new Rectangle(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale), 0, 0) : Rectangle.Empty;
+        }
+
+        private void pictureBox2_MouseUp(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & MouseButtons.Left) != MouseButtons.Left || (!_isSelectionMode || _selection == Rectangle.Empty))
+                return;
+            _selection.Width = e.X / (8 * ScreenScale) - _selection.X;
+            _selection.Height = e.Y / (8 * ScreenScale) - _selection.Y;
+            RefreshScreen();
+            _graph.DrawRectangle(Pens.Gray, _selection.X * 8 * ScreenScale, _selection.Y * 8 * ScreenScale, _selection.Width * 8 * ScreenScale, _selection.Height * 8 * ScreenScale);
         }
 
         private void selectToolStripMenuItem_Click(object sender, EventArgs e)
@@ -380,23 +407,13 @@ namespace GulImage
             drawToolStripMenuItem.Checked = !_isSelectionMode;
         }
 
-        private void pictureBox2_MouseUp(object sender, MouseEventArgs e)
-        {
-            if ((e.Button & MouseButtons.Left) != MouseButtons.Left || (!_isSelectionMode || _selection == Rectangle.Empty))
-                return;
-            _selection.Width = e.X / ImgSize - _selection.X;
-            _selection.Height = e.Y / ImgSize - _selection.Y;
-            RefreshMap();
-            _graph.DrawRectangle(Pens.Gray, _selection.X * ImgSize, _selection.Y * ImgSize, _selection.Width * ImgSize, _selection.Height * ImgSize);
-        }
-
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _buffer = new int[_selection.Width, _selection.Height];
             for (int index1 = 0; index1 < _buffer.GetLength(0); ++index1)
             {
                 for (int index2 = 0; index2 < _buffer.GetLength(1); ++index2)
-                    _buffer[index1, index2] = CurrentMap.GetPoint((int)numericUpDown1.Value, _selection.X + index1, _selection.Y + index2);
+                    _buffer[index1, index2] = CurrentMap.GetPoint(CurrentScreen, _selection.X + index1, _selection.Y + index2);
             }
         }
 
@@ -405,9 +422,9 @@ namespace GulImage
             for (int index1 = 0; index1 < _buffer.GetLength(0); ++index1)
             {
                 for (int index2 = 0; index2 < _buffer.GetLength(1); ++index2)
-                    CurrentMap.SetPoint((int)numericUpDown1.Value, _highLighted.X + index1, _highLighted.Y + index2, _buffer[index1, index2]);
+                    CurrentMap.SetPoint(CurrentScreen, _highLighted.X + index1, _highLighted.Y + index2, _buffer[index1, index2]);
             }
-            RefreshMap();
+            RefreshScreen();
         }
 
         private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
@@ -419,18 +436,7 @@ namespace GulImage
         private void showCodesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             showCodesToolStripMenuItem.Checked = !showCodesToolStripMenuItem.Checked;
-            RefreshMap();
-        }
-
-        private void palNum_ValueChanged(object sender, EventArgs e)
-        {
-            RefreshColors();
-            RefreshMap();
-        }
-
-        private void packToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Program.PackMaps();
+            RefreshScreen();
         }
     }
 }
