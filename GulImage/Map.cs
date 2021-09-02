@@ -1,26 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 
 namespace GulImage
 {
     public class Map
     {
-        private static Font _font = new Font("Tahoma", 6f, FontStyle.Bold);
-        private static Brush _brush = new SolidBrush(Color.White);
-        private int width = 32;
-        private int heigth = 31;
-        private int[] _maps;
-        private string _filename;
+        private const int ScreenWidth = 32;
+        private const int ScreenHeight = 31;
+
+        private readonly int[] _maps;
 
         public Map(string filename)
         {
-            _maps = new int[8 * width * heigth];
-            _filename = filename;
+            _maps = new int[8 * ScreenWidth * ScreenHeight];
+            Filename = filename;
             if (!File.Exists(filename))
             {
                 for (int index = 0; index < _maps.Length; ++index)
@@ -30,13 +26,13 @@ namespace GulImage
             {
                 string[] strArray1 = File.ReadAllLines(filename);
                 int index1 = 0;
-                for (int index2 = 0; index2 < heigth; ++index2)
+                for (var index2 = 0; index2 < ScreenHeight; ++index2)
                 {
-                    for (int index3 = 0; index3 < 8; ++index3)
+                    for (var index3 = 0; index3 < 8; ++index3)
                     {
-                        string[] strArray2 = strArray1[index1].Split(new string[1] { "\t.db " }, StringSplitOptions.None)[1].Split(',');
-                        for (int index4 = 0; index4 < width; ++index4)
-                            _maps[index3 * 32 + index2 * width * 8 + index4] = int.Parse(strArray2[index4]);
+                        string[] strArray2 = strArray1[index1].Split(new[] { "\t.db " }, StringSplitOptions.None)[1].Split(',');
+                        for (int index4 = 0; index4 < ScreenWidth; ++index4)
+                            _maps[index3 * 32 + index2 * ScreenWidth * 8 + index4] = int.Parse(strArray2[index4]);
                         ++index1;
                     }
                     ++index1;
@@ -44,13 +40,17 @@ namespace GulImage
             }
         }
 
+        public string Filename { get; }
+
         public void RefreshMap(
             Graphics graph,
+            Font font,
+            Brush brush,
             int screen,
             ImageList.ImageCollection images,
             bool showNumbers)
         {
-            for (int index1 = 0; index1 < heigth; ++index1)
+            for (int index1 = 0; index1 < ScreenHeight; ++index1)
             {
                 for (int index2 = 0; index2 < 32; ++index2)
                 {
@@ -62,7 +62,7 @@ namespace GulImage
                     else
                         graph.FillRectangle(new SolidBrush(Color.Gray), index2 * 16, index1 * 16, 16, 16);
                     if (showNumbers)
-                        graph.DrawString(index3.ToString(), Map._font, Map._brush, index2 * 16, index1 * 16);
+                        graph.DrawString(index3.ToString(), font, brush, index2 * 16, index1 * 16);
                 }
             }
         }
@@ -77,62 +77,18 @@ namespace GulImage
             return _maps[screen * 32 + y * 32 * 8 + x];
         }
 
-        private byte[] GetBytes(ListView listView)
+        public byte[] GetBytes()
         {
-            List<byte> byteList = new List<byte>();
+            var byteList = new List<byte>();
             for (int index = 0; index < _maps.Length; ++index)
             {
-                int map = _maps[index];
-                if (map == -1)
+                var tile = _maps[index];
+                if (tile == -1)
                     byteList.Add(byte.MaxValue);
                 else
-                    byteList.Add((byte)listView.Items[map.ToString()].Index);
+                    byteList.Add((byte)tile);
             }
             return byteList.ToArray();
-        }
-
-        private string PrepareString(byte[] bytes, int bytesInRow, int rowsInChapter)
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            int index1 = 0;
-            for (int index2 = 0; index2 < bytes.Length / bytesInRow / rowsInChapter + 1 && index1 < bytes.Length; ++index2)
-            {
-                for (int index3 = 0; index3 < rowsInChapter && index1 < bytes.Length; ++index3)
-                {
-                    stringBuilder.Append("\t.db ");
-                    for (int index4 = 0; index4 < bytesInRow; ++index4)
-                    {
-                        index1 = index3 * bytesInRow + index2 * bytesInRow * rowsInChapter + index4;
-                        if (index1 < bytes.Length)
-                        {
-                            byte num = bytes[index1];
-                            stringBuilder.Append(num);
-                            stringBuilder.Append(",");
-                        }
-                        else
-                            break;
-                    }
-                    stringBuilder.Remove(stringBuilder.Length - 1, 1);
-                    stringBuilder.Append(Environment.NewLine);
-                }
-                stringBuilder.Append(Environment.NewLine);
-            }
-            return stringBuilder.ToString();
-        }
-
-        public void Save(ListView listView)
-        {
-            File.WriteAllText(_filename, PrepareString(GetBytes(listView), 32, 8));
-        }
-
-        public string Pack(ListView listView)
-        {
-            File.WriteAllBytes("temp.bin", GetBytes(listView));
-            Process.Start("MegaLZ.exe", "temp.bin").WaitForExit();
-            byte[] bytes = File.ReadAllBytes("temp.bin.mlz");
-            File.Delete("temp.bin");
-            File.Delete("temp.bin.mlz");
-            return PrepareString(bytes, 32, 8);
         }
     }
 }
