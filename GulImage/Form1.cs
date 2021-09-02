@@ -116,29 +116,30 @@ namespace GulImage
             _tiles.AddRange(File.ReadAllLines("tiles.txt"));
             for (int index1 = 0; index1 < _tiles.Count; ++index1)
             {
-                Bitmap bitmap = new Bitmap(16, 16);
+                var bitmap = new Bitmap(16, 16);
                 for (int index2 = 0; index2 < 8; ++index2)
                 {
-                    string str1 = _tiles[index1].Split(new string[1]
-                    {
-                        "\t.db "
-                    }, StringSplitOptions.None)[1].Replace("b", string.Empty);
+                    string str1 = _tiles[index1]
+                        .Split(new string[1] { "\t.db " }, StringSplitOptions.None)[1]
+                        .Replace("b", string.Empty);
                     ++index1;
                     string[] strArray = str1.Split(',');
+                    var num = new int[2];
                     for (int index3 = 0; index3 < 2; ++index3)
                     {
-                        byte[] numArray = new byte[8];
                         string str2 = strArray[index3].Trim();
+                        num[index3] = 0;
                         for (int index4 = 0; index4 < 8; ++index4)
-                            numArray[index4] = str2[index4] != '1' ? (byte)0 : (byte)1;
-                        for (int index4 = 0; index4 < 4; ++index4)
-                        {
-                            int colorIndex = Tools.compute_color_index((int)palNum.Value, numArray[index4] * 2 + numArray[index4 + 4]);
-                            bitmap.SetPixel((index3 * 4 + index4) * 2, index2 * 2, Color.FromArgb((int)Form1.r[colorIndex], (int)Form1.g[colorIndex], (int)Form1.b[colorIndex]));
-                            bitmap.SetPixel((index3 * 4 + index4) * 2 + 1, index2 * 2 + 1, Color.FromArgb((int)Form1.r[colorIndex], (int)Form1.g[colorIndex], (int)Form1.b[colorIndex]));
-                            bitmap.SetPixel((index3 * 4 + index4) * 2, index2 * 2 + 1, Color.FromArgb((int)Form1.r[colorIndex], (int)Form1.g[colorIndex], (int)Form1.b[colorIndex]));
-                            bitmap.SetPixel((index3 * 4 + index4) * 2 + 1, index2 * 2, Color.FromArgb((int)Form1.r[colorIndex], (int)Form1.g[colorIndex], (int)Form1.b[colorIndex]));
-                        }
+                            num[index3] |=  (str2[index4] != '1' ? 0 : 1) << index4;
+                    }
+                    for (int index4 = 0; index4 < 8; ++index4)
+                    {
+                        int colorIndex = Tools.compute_color_index((int)palNum.Value, ((num[0] >> index4) & 1) * 2 + ((num[1] >> index4) & 1));
+                        var color = Color.FromArgb(r[colorIndex], g[colorIndex], b[colorIndex]);
+                        bitmap.SetPixel(index4 * 2, index2 * 2, color);
+                        bitmap.SetPixel(index4 * 2 + 1, index2 * 2, color);
+                        bitmap.SetPixel(index4 * 2, index2 * 2 + 1, color);
+                        bitmap.SetPixel(index4 * 2 + 1, index2 * 2 + 1, color);
                     }
                 }
                 imageList1.Images.Add(bitmap);
@@ -229,31 +230,38 @@ namespace GulImage
             listView1.Alignment = ListViewAlignment.Top;
         }
 
+        //NOTE: Changed for Vector-06C video
         private byte[] ParseOriginalImage(Bitmap OriginalImage)
         {
             byte[] colors = new byte[4];
             for (int color = 0; color < 4; ++color)
                 colors[color] = Tools.compute_color_index((int)palNum.Value, color);
             List<byte> byteList = new List<byte>();
-            byte num1 = 0;
+            byte num1 = 0, num2 = 0;
             for (int y = 0; y < OriginalImage.Height; ++y)
             {
                 for (int x = 0; x < OriginalImage.Width; ++x)
                 {
-                    byte num2 = 0;
-                    if (x < OriginalImage.Width)
-                        num2 = GetColor(OriginalImage.GetPixel(x, y), colors);
-                    num1 = (byte)(num1 * 2 + num2 / 2 * 16 + num2 % 2);
-                    if (x % 4 == 3)
+                    num1 = (byte)(num1 << 1);
+                    num2 = (byte)(num2 << 1);
+
+                    byte c = GetColor(OriginalImage.GetPixel(x, y), colors);
+                    num1 = (byte)(num1 | ((c >> 1) & 1));
+                    num2 = (byte)(num2 | (c & 1));
+
+                    if (x % 8 == 7)
                     {
                         byteList.Add(num1);
+                        byteList.Add(num2);
                         num1 = 0;
+                        num2 = 0;
                     }
                 }
             }
             return byteList.ToArray();
         }
 
+        // Returns color index 0..3
         private static byte GetColor(Color lCol, byte[] colors)
         {
             int num1 = int.MaxValue;
@@ -838,7 +846,8 @@ namespace GulImage
             Controls.Add((Control)menuStrip1);
             MainMenuStrip = menuStrip1;
             Name = nameof(Form1);
-            Text = "Crazy program";
+            Text = "Dangerous Rick Editor";
+            WindowState = FormWindowState.Maximized;
             ((ISupportInitialize)pictureBox1).EndInit();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
