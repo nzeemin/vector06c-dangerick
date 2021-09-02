@@ -50,7 +50,7 @@ namespace GulImage
             RefreshScreen();
         }
 
-        private Map CurrentMap => Program._maps[(int)numericUpDown2.Value];
+        private Map CurrentLevel => Program._maps[(int)numericUpDown2.Value];
 
         private int CurrentPalNum => (int)palNum.Value;
 
@@ -110,7 +110,7 @@ namespace GulImage
 
         private void RefreshScreen()
         {
-            CurrentMap.DrawScreen(
+            CurrentLevel.DrawScreen(
                 _graph, _mapFont, _mapBrush,
                 CurrentScreen, showCodesToolStripMenuItem.Checked,
                 CurrentPalNum, ScreenScale);
@@ -375,7 +375,7 @@ namespace GulImage
                 Point point = new Point(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale));
                 ListViewItem selectedItem = listView1.SelectedItems[0];
                 Graphics.FromImage(pictureBox2.Image).DrawImage(imageList1.Images[selectedItem.ImageIndex], point.X * 8 * ScreenScale, point.Y * 8 * ScreenScale);
-                CurrentMap.SetPoint(CurrentScreen, point.X, point.Y, selectedItem.ImageIndex);
+                CurrentLevel.SetPoint(CurrentScreen, point.X, point.Y, selectedItem.ImageIndex);
                 pictureBox2.Refresh();
             }
             else
@@ -413,7 +413,7 @@ namespace GulImage
             for (int index1 = 0; index1 < _buffer.GetLength(0); ++index1)
             {
                 for (int index2 = 0; index2 < _buffer.GetLength(1); ++index2)
-                    _buffer[index1, index2] = CurrentMap.GetPoint(CurrentScreen, _selection.X + index1, _selection.Y + index2);
+                    _buffer[index1, index2] = CurrentLevel.GetPoint(CurrentScreen, _selection.X + index1, _selection.Y + index2);
             }
         }
 
@@ -422,7 +422,7 @@ namespace GulImage
             for (int index1 = 0; index1 < _buffer.GetLength(0); ++index1)
             {
                 for (int index2 = 0; index2 < _buffer.GetLength(1); ++index2)
-                    CurrentMap.SetPoint(CurrentScreen, _highLighted.X + index1, _highLighted.Y + index2, _buffer[index1, index2]);
+                    CurrentLevel.SetPoint(CurrentScreen, _highLighted.X + index1, _highLighted.Y + index2, _buffer[index1, index2]);
             }
             RefreshScreen();
         }
