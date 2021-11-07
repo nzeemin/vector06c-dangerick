@@ -3,10 +3,10 @@
 ;	.include "Common.asm"
 
 
+; Draw 3-column sprite with mask on tiled background
 ;   HL = XY
-;   C = number of rows in the sprite
+;   C = number of 8-pixel rows in the sprite
 PUT_SPRITE:
-
 	DCR H		; Y--, prev row
 
 P_S1:	DCR L		; X--
@@ -21,9 +21,10 @@ P_S1:	DCR L		; X--
 	JNZ P_S1
 	RET
 
-;   HL = XY
+;   in: HL = XY
+;   preserves: HL, C
 PUT_SPRITE9:
-	PUSH H
+	PUSH H		; save XY
 
 	MOV A,L		; get X
 	ANI 00011111b	; 0..31
@@ -38,24 +39,23 @@ PUT_SPRITE9:
 	MOV E,A		; set video L byte
 
 	PUSH D		; save screen addr
-;	INR H		;NZ level addr starts at $0100
-	MOV A,M		; get tile number
-	CALL getmap
-	XCHG
-	SHLD V_TEMP_16	; set tile
+	MOV A,M		; get tile type
+	CALL getmap	; get tile addr in DE
+	XCHG		; now HL = tile addr
+	SHLD V_TEMP_16	; set tile addr
 	POP D		; restore screen addr
-	MVI B, 8
+	MVI B,8		; number of lines
 P_S9:	
-	CALL PUT_TRANS
+	CALL PUT_TRANS	; draw 8x1 sprite pixel octet with mask and tile
 
 	DCR E		; next line
-
-	DCR B
+	DCR B		; decrement the counter
 	JNZ P_S9
-	POP H
+
+	POP H		; restore XY
 	RET
 
-		;in: 	HL - xy
+		;in: 	HL - XY
 		;out: 	-
 		;chg: 	
 		;bytes:
@@ -98,14 +98,13 @@ P_T1:
 	JNZ P_T1	
 	RET		
 
-		;in: 	V_TEMP_16 - tile, P_SPRITE - sprite, DE - video
-		;out: 	-
-		;chg: 	
-		;bytes:
-		;ticks: 227 (old)
+; Draw 8x1 sprite pixel octet
+;   in:   V_TEMP_16 - tile, V_SPRITE - sprite ofset, DE - video
+;   out:  -
+;   preserves: BC
 PUT_TRANS:	
 	PUSH B
-	PUSH D
+	PUSH D		; save video addr
 
 	LHLD V_SPRITE
 	INX H
@@ -116,42 +115,23 @@ PUT_TRANS:
 
 	LXI H,Masks_start
 draw_empty_workaround:
-	DAD D		;		!MUTABLE COMMAND!
+	DAD D		;		!MUTABLE COMMAND!  MOV C,0
 	MOV C,M		;mask -> C	!MUTABLE COMMAND!
 	
 	LXI H, Images_start
 	DAD D
 	DAD D
 
-	MOV A,C
-;NZ	ANI 11110000b
-;NZ	MOV E,A
-;NZ	MOV A,C
-;NZ	ANI 11110000b
-;NZ	RRC
-;NZ	RRC
-;NZ	RRC
-;NZ	RRC
-;NZ	ORA E
-	MOV B,A		;mask1 -> B
-	ANA M
-	MOV D,A		;sprite1 -> D
+	MOV A,C		; get mask
+;NZ	MOV B,A		;mask1 -> B
+	ANA M		; AND with sprite byte
+	MOV D,A		; sprite1 -> D
+	INX H		; next sprite addr
 
 	MOV A,C
-;NZ	ANI 00001111b
-;NZ	MOV E,A
-;NZ	MOV A,C
-;NZ	ANI 00001111b
-;NZ	RLC
-;NZ	RLC
-;NZ	RLC
-;NZ	RLC
-;NZ	ORA E
 ;NZ	MOV C,A		;mask2 -> C
-
-	INX H
-	ANA M
-	MOV E,A		;sprite2 -> E
+	ANA M		; AND with sprite byte
+	MOV E,A		; sprite2 -> E
 
 visibility:
 	LXI D,0		;		!MUTABLE COMMAND!
@@ -167,12 +147,12 @@ visibility:
 	MOV A,C		; get mask
 	CMA
 	ANA M		; AND with tile 2nd byte
-	ORA E
-	MOV C,A		;tile & sprite -> C
+	ORA E		; OR with sprite2
+	MOV C,A		;tile & sprite2 -> C
 	INX H
-	SHLD V_TEMP_16	; save tile addr
+	SHLD V_TEMP_16	; update tile addr
 		
-	POP D
+	POP D		; restore video addr
 	MOV A,B		; get result1
 	STAX D		;result1 -> video
 	MVI A, 20h	; plane bit
@@ -191,8 +171,9 @@ visibility:
 
 	RET
 
+; Get tile addr
 ;   in:  A - type
-;   out: DE
+;   out: DE - addr, B = type
 getmap:
 	PUSH H
 	MOV B,A

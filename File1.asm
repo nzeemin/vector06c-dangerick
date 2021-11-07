@@ -12,17 +12,27 @@ START0:
 ;----------------------------------------------------------------------------
 
 ;NOTE: Should be started with $XX00 address
+ImagesStart:
 	.include "Images.asm"
+	.ECHO "Images size:      " \ .ECHO ($-ImagesStart) \ .ECHO " bytes.\n"
 
 enemies_msk:
 	.ds 960
 ;C_START_VARS:
 	.ds 64
 
+SpriteStart:
 	.include "Sprites.asm"
+	.ECHO "Sprites size:    " \ .ECHO ($-SpriteStart) \ .ECHO " bytes.\n"
+MapStart:
 	.include "Map.asm"
+	.ECHO "Level maps size:  " \ .ECHO ($-MapStart) \ .ECHO " bytes.\n"
+MapDataStart:
 	.include "MapData.asm"
+	.ECHO "Maps data size:   " \ .ECHO ($-MapDataStart) \ .ECHO " bytes.\n"
+MusicStart:
 	.include "Music.asm"
+	.ECHO "Music size:       " \ .ECHO ($-MusicStart) \ .ECHO " bytes.\n"
 
 	.include "Common.asm"
 
@@ -819,7 +829,7 @@ EN_DR_M2:
 	RET
 
 DRAW_BOOM:
-	MVI A,0 ;LXI D
+	MVI A,0 	; LXI D,0
 	STA visibility
 	LXI H, M_boom-Masks_start
 	MVI C,3		; number of sprite rows
@@ -827,17 +837,17 @@ DRAW_BOOM:
 	LHLD V_ENE_X
 	CALL PUT_SPRITE
 	LDA V_VISIBILITY
-	STA visibility
+	STA visibility	; LXI D,V_VISIBILITY
 	RET
 DRAW_CLEAR:
-	LXI H,000Eh; MVI C,0
+	LXI H,000Eh	; MVI C,0
 	SHLD draw_empty_workaround
 	LXI H, M_boom-Masks_start
 	MVI C,3		; number of sprite rows
 	SHLD V_SPRITE
 	LHLD V_ENE_X
 	CALL PUT_SPRITE
-	LXI H,4E19h;DAD D MOV C,M
+	LXI H,4E19h	; DAD D / MOV C,M
 	SHLD draw_empty_workaround 
 	RET
 
@@ -1761,5 +1771,7 @@ music_end:
 
 ;	.ORG $A000
 	.include "Video.asm"
+	.ECHO "Code ends at:    " \ .ECHO $ \ .ECHO "\n"
+	.ECHO "Free space about: " \ .ECHO (0BF00h - $) \ .ECHO " bytes.\n"
 
 	.end
