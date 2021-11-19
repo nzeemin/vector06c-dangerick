@@ -21,19 +21,20 @@ namespace GulImage
         public void ParseMap(string[] fileContent)
         {
             int index1 = 0;
-            for (var index2 = 0; index2 < ScreenHeight; ++index2)
+            for (var row = 0; row < ScreenHeight; ++row)
             {
-                for (var index3 = 0; index3 < 8; ++index3)
+                for (var screen = 0; screen < 8; ++screen)
                 {
                     string[] strArray2 = fileContent[index1].Split(new[] { "\t.db " }, StringSplitOptions.None)[1].Split(',');
-                    for (int index4 = 0; index4 < ScreenWidth; ++index4)
-                        _maps[index3 * 32 + index2 * ScreenWidth * 8 + index4] = int.Parse(strArray2[index4]);
+                    for (var col = 0; col < ScreenWidth; ++col)
+                        _maps[screen * 32 + row * ScreenWidth * 8 + col] = int.Parse(strArray2[col]);
                     ++index1;
                 }
                 ++index1;
             }
         }
 
+        //TODO: Move to Form1
         public void DrawScreen(
             Graphics graph,
             Font font,
@@ -43,15 +44,17 @@ namespace GulImage
             int palette,
             int scale = 2)
         {
+            var tiles = Program._tiles;
+
             for (var y = 0; y < ScreenHeight; ++y)
             {
                 for (var x = 0; x < ScreenWidth; ++x)
                 {
-                    int tile = _maps[screen * ScreenWidth + y * ScreenWidth * 8 + x];
-                    if (tile >= Program._tiles.Count)
+                    int tile = GetTile(screen, x, y);
+                    if (tile >= tiles.Count)
                         tile = -1;
                     if (tile >= 0)
-                        Tools.DrawTile(graph, palette, Program._tiles[tile], x * 8 * scale, y * 8 * scale, scale);
+                        Tools.DrawTile(graph, palette, tiles[tile], x * 8 * scale, y * 8 * scale, scale);
                     else
                         graph.FillRectangle(new SolidBrush(Color.Gray), x * 8 * scale, y * 8 * scale, 8 * scale, 8 * scale);
                     if (showNumbers)
@@ -60,12 +63,12 @@ namespace GulImage
             }
         }
 
-        public void SetPoint(int screen, int x, int y, int value)
+        public void SetTile(int screen, int x, int y, int value)
         {
             _maps[screen * ScreenWidth + y * ScreenWidth * 8 + x] = value;
         }
 
-        public int GetPoint(int screen, int x, int y)
+        public int GetTile(int screen, int x, int y)
         {
             return _maps[screen * ScreenWidth + y * ScreenWidth * 8 + x];
         }
@@ -73,7 +76,7 @@ namespace GulImage
         public byte[] GetBytes()
         {
             var byteList = new List<byte>();
-            for (int index = 0; index < _maps.Length; ++index)
+            for (var index = 0; index < _maps.Length; ++index)
             {
                 var tile = _maps[index];
                 if (tile == -1)

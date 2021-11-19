@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.IO;
-using System.Text;
 using System.Windows.Forms;
 
 namespace GulImage
@@ -76,13 +73,13 @@ namespace GulImage
         {
             imageList1.Images.Clear();
             listView1.Items.Clear();
-            for (int index1 = 0; index1 < Program._tiles.Count; ++index1)
+            for (var tile = 0; tile < Program._tiles.Count; ++tile)
             {
-                var bytes = Program._tiles[index1];
+                var bytes = Program._tiles[tile];
                 var bitmap = Tools.PrepareTileBitmap(CurrentPalNum, bytes, 1);
 
                 imageList1.Images.Add(bitmap);
-                ListView.ListViewItemCollection items = listView1.Items;
+                var items = listView1.Items;
                 int count1 = listView1.Items.Count;
                 string key = count1.ToString();
                 count1 = listView1.Items.Count;
@@ -94,12 +91,12 @@ namespace GulImage
 
         private void RefreshImage()
         {
-            Bitmap bitmap = new Bitmap(_image.Width * 3, _image.Height * 3);
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            var bitmap = new Bitmap(_image.Width * 3, _image.Height * 3);
+            using (var graphics = Graphics.FromImage(bitmap))
             {
                 graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
                 graphics.DrawImage(_image, 0, 0, _image.Width * 3, _image.Height * 3);
-                for (int index = 0; index < _image.Width / 8; ++index)
+                for (var index = 0; index < _image.Width / 8; ++index)
                 {
                     graphics.DrawLine(Pens.White, 0, index * 24 + 23, _image.Width * 3, index * 24 + 23);
                     graphics.DrawLine(Pens.White, index * 24 + 23, 0, index * 24 + 23, _image.Height * 3);
@@ -119,14 +116,14 @@ namespace GulImage
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            var openFileDialog = new OpenFileDialog();
             byte[] colors = new byte[4];
             for (int color = 0; color < 4; ++color)
                 colors[color] = Tools.compute_color_index(CurrentPalNum, color);
             if (openFileDialog.ShowDialog() != DialogResult.OK)
                 return;
-            Bitmap bitmap1 = new Bitmap(openFileDialog.FileName);
-            Bitmap bitmap2 = new Bitmap(bitmap1.Width, bitmap1.Height);
+            var bitmap1 = new Bitmap(openFileDialog.FileName);
+            var bitmap2 = new Bitmap(bitmap1.Width, bitmap1.Height);
             for (int y = 0; y < bitmap2.Height; ++y)
             {
                 for (int x = 0; x < bitmap2.Width; ++x)
@@ -143,11 +140,11 @@ namespace GulImage
 
         private void splitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            for (int index1 = 0; index1 < _image.Height / 8; ++index1)
+            for (var row = 0; row < _image.Height / 8; ++row)
             {
-                for (int index2 = 0; index2 < _image.Width / 8; ++index2)
+                for (var col = 0; col < _image.Width / 8; ++col)
                 {
-                    imageList1.Images.Add(_image.Clone(new Rectangle(index2 * 8, index1 * 8, 8, 8), PixelFormat.Undefined));
+                    imageList1.Images.Add(_image.Clone(new Rectangle(col * 8, row * 8, 8, 8), PixelFormat.Undefined));
                     ListView.ListViewItemCollection items = listView1.Items;
                     int count1 = listView1.Items.Count;
                     string key = count1.ToString();
@@ -193,7 +190,7 @@ namespace GulImage
             byte num1 = 0, num2 = 0;
             for (var y = 0; y < originalImage.Height; ++y)
             {
-                for (int x = 0; x < originalImage.Width; ++x)
+                for (var x = 0; x < originalImage.Width; ++x)
                 {
                     num1 = (byte)(num1 << 1);
                     num2 = (byte)(num2 << 1);
@@ -232,36 +229,19 @@ namespace GulImage
             return num2;
         }
 
+        // Save tiles and all the maps
         private void tmiSave_Click(object sender, EventArgs e)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int index1 = 0; index1 < listView1.Items.Count; ++index1)
+            var tileCount = listView1.Items.Count;
+            var tiles = new List<byte[]>(tileCount);
+            for (var tile = 0; tile < tileCount; ++tile)
             {
-                var tileImage = imageList1.Images[listView1.Items[index1].ImageIndex];
-                Bitmap OriginalImage = new Bitmap(tileImage, 8, 8);
-                byte[] originalImage = ParseOriginalImage(OriginalImage);
-                stringBuilder.Append("tile" + index1 + ":");
-                for (int index2 = 0; index2 < OriginalImage.Height; ++index2)
-                {
-                    stringBuilder.Append("\t.db ");
-                    for (int index3 = 0; index3 < OriginalImage.Width / 4; ++index3)
-                    {
-                        BitArray bitArray = new BitArray(new byte[1]
-                        {
-                            originalImage[index3 + index2 * OriginalImage.Width / 4]
-                        });
-                        for (int index4 = 0; index4 < 8; ++index4)
-                        {
-                            stringBuilder.Append(bitArray[7 - index4] ? "1" : "0");
-                        }
-                        stringBuilder.Append("b, ");
-                    }
-                    stringBuilder.Remove(stringBuilder.Length - 2, 2);
-                    stringBuilder.Append(Environment.NewLine);
-                }
-                stringBuilder.Append(Environment.NewLine);
+                var tileImage = imageList1.Images[listView1.Items[tile].ImageIndex];
+                var originalImage = new Bitmap(tileImage, 8, 8);
+                tiles.Add(ParseOriginalImage(originalImage));
             }
-            File.WriteAllText("tiles.txt", stringBuilder.ToString());
+            Program._tiles = tiles;
+            Program.SaveTiles();
 
             Program.SaveMaps();
         }
@@ -375,7 +355,7 @@ namespace GulImage
                 Point point = new Point(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale));
                 ListViewItem selectedItem = listView1.SelectedItems[0];
                 Graphics.FromImage(pictureBox2.Image).DrawImage(imageList1.Images[selectedItem.ImageIndex], point.X * 8 * ScreenScale, point.Y * 8 * ScreenScale);
-                CurrentLevel.SetPoint(CurrentScreen, point.X, point.Y, selectedItem.ImageIndex);
+                CurrentLevel.SetTile(CurrentScreen, point.X, point.Y, selectedItem.ImageIndex);
                 pictureBox2.Refresh();
             }
             else
@@ -413,7 +393,7 @@ namespace GulImage
             for (int index1 = 0; index1 < _buffer.GetLength(0); ++index1)
             {
                 for (int index2 = 0; index2 < _buffer.GetLength(1); ++index2)
-                    _buffer[index1, index2] = CurrentLevel.GetPoint(CurrentScreen, _selection.X + index1, _selection.Y + index2);
+                    _buffer[index1, index2] = CurrentLevel.GetTile(CurrentScreen, _selection.X + index1, _selection.Y + index2);
             }
         }
 
@@ -422,7 +402,7 @@ namespace GulImage
             for (int index1 = 0; index1 < _buffer.GetLength(0); ++index1)
             {
                 for (int index2 = 0; index2 < _buffer.GetLength(1); ++index2)
-                    CurrentLevel.SetPoint(CurrentScreen, _highLighted.X + index1, _highLighted.Y + index2, _buffer[index1, index2]);
+                    CurrentLevel.SetTile(CurrentScreen, _highLighted.X + index1, _highLighted.Y + index2, _buffer[index1, index2]);
             }
             RefreshScreen();
         }

@@ -12,7 +12,10 @@ namespace GulImage
         public static readonly List<Map> _maps = new List<Map>();
         public static List<byte[]> _tiles;
 
-        private static readonly string[] MapFileNames = { "maps1.txt", "maps2.txt", "maps3.txt", "maps4.txt" };
+        private static readonly string[] MapFileNames =
+        {
+            "maps1.txt", "maps2.txt", "maps3.txt", "maps4.txt"
+        };
 
         [STAThread]
         private static void Main()
@@ -20,6 +23,14 @@ namespace GulImage
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            ReadMaps();
+            ReadTiles();
+
+            Application.Run(new Form1());
+        }
+
+        private static void ReadMaps()
+        {
             foreach (var filename in MapFileNames)
             {
                 var map = new Map();
@@ -30,22 +41,29 @@ namespace GulImage
                 }
                 _maps.Add(map);
             }
-
-            var fileContent = File.ReadAllLines("tiles.txt");
-            _tiles = Tools.ParseTiles(fileContent);
-
-            Application.Run(new Form1());
         }
 
         public static void SaveMaps()
         {
-            for (var i = 0; i < _maps.Count; i++)
+            for (var n = 0; n < _maps.Count; n++)
             {
-                var map = _maps[i];
-                File.WriteAllText(
-                    MapFileNames[i],
-                    Tools.PrepareAsmDbStrings(map.GetBytes(), 32, 8));
+                var map = _maps[n];
+                //TODO: Move to Map class
+                var contents = Tools.PrepareAsmDbStrings(map.GetBytes(), 32, 8);
+                File.WriteAllText(MapFileNames[n], contents);
             }
+        }
+
+        private static void ReadTiles()
+        {
+            var fileContent = File.ReadAllLines("tiles.txt");
+            _tiles = Tools.ParseTiles(fileContent);
+        }
+
+        public static void SaveTiles()
+        {
+            var fileContent = Tools.PrepareTilesFileContent(_tiles);
+            File.WriteAllText("tiles.txt", fileContent);
         }
 
         public static void PackMaps()
@@ -53,25 +71,25 @@ namespace GulImage
             if (!File.Exists("MegaLZ.exe"))
                 return; //TODO: Show message
 
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int index = 0; index < Program._maps.Count; ++index)
+            var sb = new StringBuilder();
+            for (var n = 0; n < Program._maps.Count; ++n)
             {
-                var map = _maps[index];
+                var map = _maps[n];
 
                 File.WriteAllBytes("temp.bin", map.GetBytes());
+                
                 Process.Start("MegaLZ.exe", "temp.bin").WaitForExit();
+
                 byte[] bytes = File.ReadAllBytes("temp.bin.mlz");
                 File.Delete("temp.bin");
                 File.Delete("temp.bin.mlz");
                 var asmStrings = Tools.PrepareAsmDbStrings(bytes, 32, 8);
 
-                stringBuilder.Append("map");
-                stringBuilder.Append(index + 1);
-                stringBuilder.AppendLine(":");
-                stringBuilder.AppendLine(asmStrings);
+                sb.AppendLine($"map{n + 1}:");
+                sb.AppendLine(asmStrings);
             }
 
-            File.WriteAllText("Map.asm", stringBuilder.ToString());
+            File.WriteAllText("Map.asm", sb.ToString());
             File.Copy("tiles.txt", "Tiles.asm", true);
         }
     }

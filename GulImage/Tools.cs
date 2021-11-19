@@ -80,37 +80,37 @@ namespace GulImage
 
         public static string PrepareAsmDbStrings(byte[] bytes, int bytesInRow, int rowsInChapter)
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            var sb = new StringBuilder();
             int index1 = 0;
-            for (int index2 = 0; index2 < bytes.Length / bytesInRow / rowsInChapter + 1 && index1 < bytes.Length; ++index2)
+            for (var index2 = 0; index2 < bytes.Length / bytesInRow / rowsInChapter + 1 && index1 < bytes.Length; ++index2)
             {
-                for (int index3 = 0; index3 < rowsInChapter && index1 < bytes.Length; ++index3)
+                for (var index3 = 0; index3 < rowsInChapter && index1 < bytes.Length; ++index3)
                 {
-                    stringBuilder.Append("\t.db ");
+                    sb.Append("\t.db ");
                     for (int index4 = 0; index4 < bytesInRow; ++index4)
                     {
                         index1 = index3 * bytesInRow + index2 * bytesInRow * rowsInChapter + index4;
                         if (index1 < bytes.Length)
                         {
                             byte num = bytes[index1];
-                            stringBuilder.Append(num);
-                            stringBuilder.Append(",");
+                            sb.Append(num);
+                            sb.Append(",");
                         }
                         else
                             break;
                     }
-                    stringBuilder.Remove(stringBuilder.Length - 1, 1);
-                    stringBuilder.Append(Environment.NewLine);
+                    sb.Remove(sb.Length - 1, 1);
+                    sb.Append(Environment.NewLine);
                 }
-                stringBuilder.Append(Environment.NewLine);
+                sb.Append(Environment.NewLine);
             }
-            return stringBuilder.ToString();
+            return sb.ToString();
         }
 
         public static List<byte[]> ParseTiles(string[] fileContent)
         {
-            List<byte[]> result = new List<byte[]>();
-            for (int index1 = 0; index1 < fileContent.Length; ++index1)
+            var result = new List<byte[]>();
+            for (var index1 = 0; index1 < fileContent.Length; ++index1)
             {
                 var bytes = new byte[16];
                 for (var index2 = 0; index2 < 8; ++index2)
@@ -135,9 +135,39 @@ namespace GulImage
             return result;
         }
 
+        public static string PrepareTilesFileContent(List<byte[]> tiles)
+        {
+            var sb = new StringBuilder();
+
+            for (var tile = 0; tile < tiles.Count; ++tile)
+            {
+                var tileBytes = tiles[tile];
+                sb.Append($"tile{tile}:");
+                for (var y = 0; y < 8; y++)
+                {
+                    sb.Append("\t.db ");
+                    for (var t = 0; t < 2; t++)
+                    {
+                        byte b = tileBytes[y * 2 + t];
+                        for (var i = 0; i < 8; i++)
+                        {
+                            sb.Append((b >> (7 - i) & 1) == 1 ? '1' : '0');
+                        }
+                        sb.Append("b");
+                        if (t == 0)
+                            sb.Append(", ");
+                    }
+                    sb.AppendLine();
+                }
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+
         public static void DrawTile(Graphics graph, int palette, byte[] bytes, int x = 0, int y = 0, int scale = 2)
         {
-            for (int ty = 0; ty < 8; ++ty)
+            for (var ty = 0; ty < 8; ++ty)
             {
                 var num0 = bytes[ty * 2];
                 var num1 = bytes[ty * 2 + 1];
