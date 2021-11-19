@@ -52,9 +52,6 @@
     </Compile>
     <Compile Include="Map.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="SizeForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="Tools.cs" />
     <Compile Include="Properties\Resources.cs" />
     <Compile Include="Properties\Settings.cs" />
@@ -63,7 +60,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx" />
     <EmbeddedResource Include="Properties\Resources.resx" />
-    <EmbeddedResource Include="SizeForm.resx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
