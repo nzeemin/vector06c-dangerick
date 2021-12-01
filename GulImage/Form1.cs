@@ -19,7 +19,7 @@ namespace GulImage
         private Point _highLighted;
         private readonly Bitmap _screenImage;
         private readonly Graphics _graph;
-        private int[,] _buffer;
+        private int[,] _buffer;  // Copy/paste buffer
         private int _currentLevel;
 
         private static readonly Font _mapFont = new Font("Tahoma", 6f, FontStyle.Bold);
@@ -64,7 +64,7 @@ namespace GulImage
             for (var tile = 0; tile < Program._tiles.Count; ++tile)
             {
                 var bytes = Program._tiles[tile];
-                var bitmap = Tools.PrepareTileBitmap(CurrentPalNum, bytes, 1);
+                var bitmap = Tools.CreateTileBitmap(CurrentPalNum, bytes, 1);
 
                 imageList1.Images.Add(bitmap);
                 var items = listView1.Items;
@@ -82,7 +82,8 @@ namespace GulImage
             if (_graph == null)
                 return;
 
-            CurrentMap.DrawScreen(
+            Tools.DrawScreen(
+                CurrentMap,
                 _graph, _mapFont, _mapBrush,
                 CurrentScreen, showCodesToolStripMenuItem.Checked,
                 CurrentPalNum, ScreenScale);
@@ -214,7 +215,7 @@ namespace GulImage
             {
                 if (_isSelectionMode && _selection != Rectangle.Empty)
                     return;
-                Point point = new Point(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale));
+                var point = new Point(e.X / (8 * ScreenScale), e.Y / (8 * ScreenScale));
                 if (_highLighted != point)
                 {
                     _highLighted = point;

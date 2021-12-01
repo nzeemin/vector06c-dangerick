@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 
 namespace GulImage
 {
@@ -18,51 +17,6 @@ namespace GulImage
                 _maps[index] = -1;
         }
 
-        public void ParseMap(string[] fileContent)
-        {
-            int index1 = 0;
-            for (var row = 0; row < ScreenHeight; ++row)
-            {
-                for (var screen = 0; screen < 8; ++screen)
-                {
-                    string[] strArray2 = fileContent[index1].Split(new[] { "\t.db " }, StringSplitOptions.None)[1].Split(',');
-                    for (var col = 0; col < ScreenWidth; ++col)
-                        _maps[screen * 32 + row * ScreenWidth * 8 + col] = int.Parse(strArray2[col]);
-                    ++index1;
-                }
-                ++index1;
-            }
-        }
-
-        //TODO: Move to Form1
-        public void DrawScreen(
-            Graphics graph,
-            Font font,
-            Brush brush,
-            int screen,
-            bool showNumbers,
-            int palette,
-            int scale = 2)
-        {
-            var tiles = Program._tiles;
-
-            for (var y = 0; y < ScreenHeight; ++y)
-            {
-                for (var x = 0; x < ScreenWidth; ++x)
-                {
-                    int tile = GetTile(screen, x, y);
-                    if (tile >= tiles.Count)
-                        tile = -1;
-                    if (tile >= 0)
-                        Tools.DrawTile(graph, palette, tiles[tile], x * 8 * scale, y * 8 * scale, scale);
-                    else
-                        graph.FillRectangle(new SolidBrush(Color.Gray), x * 8 * scale, y * 8 * scale, 8 * scale, 8 * scale);
-                    if (showNumbers)
-                        graph.DrawString(tile.ToString(), font, brush, x * 8 * scale, y * 8 * scale);
-                }
-            }
-        }
-
         public void SetTile(int screen, int x, int y, int value)
         {
             _maps[screen * ScreenWidth + y * ScreenWidth * 8 + x] = value;
@@ -73,7 +27,25 @@ namespace GulImage
             return _maps[screen * ScreenWidth + y * ScreenWidth * 8 + x];
         }
 
-        public byte[] GetBytes()
+        public void ParseMap(string[] fileContent)
+        {
+            var index1 = 0;
+            for (var row = 0; row < ScreenHeight; ++row)
+            {
+                for (var screen = 0; screen < 8; ++screen)
+                {
+                    var strArray2 = fileContent[index1]
+                        .Split(new[] { "\t.db " }, StringSplitOptions.None)[1]
+                        .Split(',');
+                    for (var col = 0; col < ScreenWidth; ++col)
+                        SetTile(screen, col, row, int.Parse(strArray2[col]));
+                    ++index1;
+                }
+                ++index1;
+            }
+        }
+
+        public byte[] ToByteArray()
         {
             var byteList = new List<byte>();
             for (var index = 0; index < _maps.Length; ++index)

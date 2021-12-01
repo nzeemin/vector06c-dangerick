@@ -49,7 +49,7 @@ namespace GulImage
             {
                 var map = _maps[n];
                 //TODO: Move to Map class
-                var contents = Tools.PrepareAsmDbStrings(map.GetBytes(), 32, 8);
+                var contents = Tools.PrepareAsmDbStrings(map.ToByteArray(), 32, 8);
                 File.WriteAllText(MapFileNames[n], contents);
             }
         }
@@ -76,7 +76,7 @@ namespace GulImage
             {
                 var map = _maps[n];
 
-                File.WriteAllBytes("temp.bin", map.GetBytes());
+                File.WriteAllBytes("temp.bin", map.ToByteArray());
                 
                 Process.Start("MegaLZ.exe", "temp.bin").WaitForExit();
 

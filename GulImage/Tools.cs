@@ -1,8 +1,8 @@
 ﻿using System;
-using GulImage.Properties;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using GulImage.Properties;
 
 namespace GulImage
 {
@@ -16,8 +16,6 @@ namespace GulImage
         private static byte[] b = new byte[8] { 0, 192, 0, 192, 0, 192, 0, byte.MaxValue };
         private static byte[] g = new byte[8] { 0, 0, 192, 192, 0, 0, 192, byte.MaxValue };
         private static byte[] r = new byte[8] { 0, 0, 0, 0, 192, 192, 192, byte.MaxValue };
-
-        private static List<byte> palettes;
 
         public static byte compute_color_index(int port, int color)
         {
@@ -62,22 +60,6 @@ namespace GulImage
             return black;
         }
 
-        public static List<byte> GetDiffPalettes()
-        {
-            if (Tools.palettes == null)
-            {
-                Tools.palettes = new List<byte>();
-                foreach (char ch in Resources.pal)
-                    Tools.palettes.Add((byte)ch);
-            }
-            return Tools.palettes;
-        }
-
-        public static Color GetColorFromNumber(int number)
-        {
-            return Color.FromArgb((int)Tools.r[number], (int)Tools.g[number], (int)Tools.b[number]);
-        }
-
         public static string PrepareAsmDbStrings(byte[] bytes, int bytesInRow, int rowsInChapter)
         {
             var sb = new StringBuilder();
@@ -90,14 +72,12 @@ namespace GulImage
                     for (int index4 = 0; index4 < bytesInRow; ++index4)
                     {
                         index1 = index3 * bytesInRow + index2 * bytesInRow * rowsInChapter + index4;
-                        if (index1 < bytes.Length)
-                        {
-                            byte num = bytes[index1];
-                            sb.Append(num);
-                            sb.Append(",");
-                        }
-                        else
+                        if (index1 >= bytes.Length)
                             break;
+
+                        byte num = bytes[index1];
+                        sb.Append(num);
+                        sb.Append(",");
                     }
                     sb.Remove(sb.Length - 1, 1);
                     sb.Append(Environment.NewLine);
@@ -115,7 +95,7 @@ namespace GulImage
                 var bytes = new byte[16];
                 for (var index2 = 0; index2 < 8; ++index2)
                 {
-                    string str1 = fileContent[index1]
+                    var str1 = fileContent[index1]
                         .Split(new[] { "\t.db " }, StringSplitOptions.None)[1]
                         .Replace("b", string.Empty);
                     string[] strArray = str1.Split(',');
@@ -123,7 +103,7 @@ namespace GulImage
                     {
                         var str2 = strArray[index3].Trim();
                         int num = 0;
-                        for (int index4 = 0; index4 < 8; ++index4)
+                        for (var index4 = 0; index4 < 8; ++index4)
                             num |= (str2[index4] != '1' ? 0 : 1) << index4;
                         bytes[index2 * 2 + index3] = (byte)num;
                     }
@@ -175,12 +155,44 @@ namespace GulImage
                 {
                     int colorIndex = compute_color_index(palette, ((num0 >> tx) & 1) * 2 + ((num1 >> tx) & 1));
                     var color = Color.FromArgb(r[colorIndex], g[colorIndex], b[colorIndex]);
-                    graph.FillRectangle(new SolidBrush(color), x + tx * scale, y + ty * scale, scale, scale);
+                    using (var brush = new SolidBrush(color))
+                    {
+                        graph.FillRectangle(brush, x + tx * scale, y + ty * scale, scale, scale);
+                    }
                 }
             }
         }
 
-        public static Bitmap PrepareTileBitmap(int palette, byte[] bytes, int scale = 2)
+        public static void DrawScreen(
+            Map map,
+            Graphics graph,
+            Font font,
+            Brush brush,
+            int screen,
+            bool showNumbers,
+            int palette,
+            int scale = 2)
+        {
+            var tiles = Program._tiles;
+
+            for (var y = 0; y < Map.ScreenHeight; ++y)
+            {
+                for (var x = 0; x < Map.ScreenWidth; ++x)
+                {
+                    int tile = map.GetTile(screen, x, y);
+                    if (tile >= tiles.Count)
+                        tile = -1;
+                    if (tile >= 0)
+                        Tools.DrawTile(graph, palette, tiles[tile], x * 8 * scale, y * 8 * scale, scale);
+                    else
+                        graph.FillRectangle(new SolidBrush(Color.Gray), x * 8 * scale, y * 8 * scale, 8 * scale, 8 * scale);
+                    if (showNumbers)
+                        graph.DrawString(tile.ToString(), font, brush, x * 8 * scale, y * 8 * scale);
+                }
+            }
+        }
+
+        public static Bitmap CreateTileBitmap(int palette, byte[] bytes, int scale = 2)
         {
             var bitmap = new Bitmap(8 * scale, 8 * scale);
             using (var graph = Graphics.FromImage(bitmap))
