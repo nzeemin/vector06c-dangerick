@@ -97,7 +97,7 @@ w_intro_text:
 	.dw 0C325h ;NZ
 	.db 0,"VECTOR06C",40h,"PORT",40h,"BY",40h,"NZEEMIN",0
 	.dw 0D413h ;NZ 7b28h
-	.db 0,"2022",40h,"V0.05",40h,0
+	.db 0,"2022",40h,"V0.06",40h,0
 	.dw 00
 w_text1:
 	.dw 0CBF7h ;NZ 4216h

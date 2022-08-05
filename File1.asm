@@ -655,7 +655,7 @@ DO_SOUND:
 	STA V_SOUND
 LASER2: 
 	XRI   1
-;TODO       OUT 0C3h
+       OUT 000h
        MOV    B,H
 LSR3:
        DCR B
@@ -1688,84 +1688,76 @@ cur_curmusic:
 ; ---------------------------------------------------------------------------
 
 note_size_any:
-		inx	h
+		inx h
 		inx h
 		shld cur_note
 		dcx h
-		mov	h,m
-		mov	l,a
-		RET
+		mov h,m
+		mov l,a
+		ret
 
 note_size_const:
 		shld cur_note
-		LXI H,800h
-		RET
+		lxi H,800h
+		ret
 
 INIT_MUSIC:
-		LHLD cur_curmusic
+		lhld cur_curmusic
 		shld cur_note
-		RET
+		ret
 
 Play_note:
-
 		lhld cur_note
-		xra	a
-		ora	m
-		jz	music_end
-
-		mov	e,m
-		inx	h
-		mov	d,m
-		inx	h
-		mov	a,m
-		CALL note_size_any
+		xra a
+		ora m
+		JZ music_end
+		mov e,m
+		inx h
+		mov d,m
+		inx h
+		mov a,m
+		call note_size_any
 		xchg
 		
 ;DE - длительность звучания
 ;HL - длительность полупериода, т.е. задает частоту
 FineBeep:
-		
-		MVI A,1
-		STA SetTrig+1
-		mvi	a,0FFh
-		cmp	h
-		jnz	NotPause
-		cmp	l
-		jnz	NotPause
-		LXI H, 35
-		MVI A,0
-		STA SetTrig+1
-		
-NotPause:	
-		shld cur_duration
-BeepLoop:	
-;TODO		in	0C2h	;10
-
+		mvi A,1
+		sta SetTrig+1
+		mvi a,0FFh
+		cmp h
+		jnz NotPause
+		cmp l
+		jnz NotPause
+		lxi H, 35
+		xra A
+		sta SetTrig+1
+NotPause:	shld cur_duration
+BeepLoop:	lda Port_00
 SetTrig:	xri 1	;4
-;TODO		out	0C2h	;10
-		
-BeepDelay:	
-	DCX H		;5
-	MOV A,H		;5
-	ORA L		;4
-	JNZ BeepDelay	;11/5
+		out 000h	;10
+		sta Port_00
+BeepDelay:	dcx H		;5
+		mov A,H		;5
+		ora L		;4
+		jnz BeepDelay	;11/5
 		lhld cur_duration;DelayJmp:	jmp	0	;10
-		MOV A,E
-		SUB L
-		MOV E,A
-		MOV A,D
-		SBB H
-		RC
-		MOV D,A
-
-	jmp	BeepLoop  ;10
-
+		mov A,E
+		sub L
+		mov E,A
+		mov A,D
+		sbb H
+		rc
+		mov D,A
+		jmp BeepLoop  ;10
 music_end:
-	inx h
-	ora m
-	RZ
-	CALL INIT_MUSIC
-	JMP Play_note
+		inx h
+		ora m
+		rz
+		call INIT_MUSIC
+		jmp Play_note
+
+Port_00:	.db 00h
 
 ; ---------------------------------------------------------------------------
 
