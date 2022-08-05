@@ -32,9 +32,9 @@ Restart:
 	out	4			; initialize R-Sound 2
 
 ; Joystick init
-	mvi	a, 92h		; control byte
+	mvi	a, 83h		; control byte
 	out	4		; initialize the I/O controller
-	mvi	a, 60h		; bits to check Joystick-P, both P1 and P2
+	mvi	a, 9Fh		; bits to check Joystick-P, both P1 and P2
 	out	5		; set Joystick-P query bits
 	in	6		; read Joystick-P initial value
 	sta	KEYINT_J+1	; store as xra instruction parameter
